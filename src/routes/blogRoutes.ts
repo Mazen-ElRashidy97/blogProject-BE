@@ -6,7 +6,7 @@ import { addUserBlog, deleteUserBlog, getAllBlogs, updateUserBlog } from "../con
 export const router = express.Router();
 
 
-router.get("/", asyncMiddleware(getAllBlogs));
+router.get("/",asyncMiddleware(getAllBlogs));
 router.post("/:id", asyncMiddleware(addUserBlog));
 router.put("/:id", asyncMiddleware(updateUserBlog));
 router.delete("/:id", asyncMiddleware(deleteUserBlog)); 

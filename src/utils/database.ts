@@ -1,8 +1,6 @@
 import { Pool } from 'pg';
 import dotenv from 'dotenv';
-import bcrypt from 'bcrypt';
 import { BlogDataBody, BlogDataBodyUpdate, UserModel } from '../models/models';
-import ca from 'zod/v4/locales/ca.js';
 
 dotenv.config();
 
@@ -52,6 +50,7 @@ export const getBlogsFromDatabase = async (categories?: string[]) => {
     const client = await pool.connect();
     try {
         let result;
+        //check one query for both
         if (categories && categories.length > 0) {
             const query = `
                 SELECT DISTINCT b.*
@@ -171,7 +170,7 @@ export const updateBlogInDatabase = async (userId: number, blogData: BlogDataBod
                 return categoryId;
             })
         );
-
+        //check remove 
         console.log('mazenArray', categoryResults);
 
         // Remove rows for that blog_ id

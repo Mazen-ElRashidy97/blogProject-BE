@@ -16,12 +16,14 @@ export const addUserBlogService = async (userId: number, blogData: BlogDataBody)
 }
 
 export const updateUserBlogService = async (userId: number, blogData: BlogDataBodyUpdate) => {
+    //check user is the owner of the blog
     const updatedBlog = await updateBlogInDatabase(userId, blogData);
 
     return updatedBlog
 }
 
 export const deleteUserBlogService = async (userId: number, blogId: number) => {
+    //check user is the owner of the blog
     const deletedBlog = await deleteBlogInDatabase(userId, blogId);
 
     return deletedBlog;
