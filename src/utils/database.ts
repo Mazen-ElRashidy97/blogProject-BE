@@ -56,7 +56,12 @@ export const getBlogsFromDatabase = async (categories?: string[]) => {
                 INNER JOIN categories c ON bc.category_id = c.id
                 ${categories && categories.length > 0 && 'WHERE c.name = ANY($1)'} ;
             `;
-        categories && categories?.length > 0 ? result = await client.query(query, [categories]) : result = await client.query(query);
+
+        if (!categories || categories.length === 0) {
+            result = await client.query(query);
+        } else {
+            result = await client.query(query, [categories]);
+        }
 
         if (result.rows.length === 0) throw new Error('No blogs found for the specified categories');
 
