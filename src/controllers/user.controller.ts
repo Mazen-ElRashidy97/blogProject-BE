@@ -17,7 +17,7 @@ export const loginUser = async (req: any, res: any) => {
     const userLogged = await userLogInService(user.email, user.password);
 
     res.cookie('token', userLogged.token, {
-        secure: process.env.NODE_ENV === 'production', // check
+        secure: process.env.NODE_ENV === 'production', // Use secure cookies in production
         httpOnly: true,
     }).status(200).json({ message: "Login successful", user: userLogged });
 

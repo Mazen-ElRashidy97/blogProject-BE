@@ -1,71 +1,58 @@
 import { verifyToken } from "../utils/token";
-import { validateBlogData } from "../utils/validation";
+import { validateBlogData, validateCategoryQuery } from "../utils/validation";
 import { addUserBlogService, deleteUserBlogService, getAllBlogsService, updateUserBlogService } from "../services/blog.service";
 
-//check categories names should start with capital letter
 //all apis should return data with category
-export const getAllBlogs = async (req: any, res: any) => { //in progress
-    //check missing validation for query
+export const getAllBlogs = async (req: any, res: any) => {
     const categoriesParam = req.query.categories as string;
-    const categories = categoriesParam ? categoriesParam.split(',') : [];
+    let categories: string[] | undefined;
+    
+    if (categoriesParam) {
+        categories = validateCategoryQuery(categoriesParam);
+    }
 
     const blogs = await getAllBlogsService(categories);
-    //check wrong status code
+
     res.status(200).json({ message: "All blogs fetched successfully", blogs });
 }
 
 export const addUserBlog = async (req: any, res: any) => {
-    //check why are you sending userId in the params
-    //check create is CREATE /api/blogs
-    const userId = parseInt(req.params.id);
-    const token = req.cookies.token;
-    //check tonken verifcation should be in middleware
-    const payload = await verifyToken(token);
+
+    const userId = req.headers['x-auth-userId'];
+    if (!userId) throw new Error('User ID not found in headers');
+
     const { title, content, category } = req.body;
-    //check validate before mapping
-    const categorySmallCase = category.map((e: string) => e.toLowerCase());
 
-    const blogData = validateBlogData({ title, content, category: categorySmallCase });
-    
-    if (!token) throw new Error('No token found');
+    const blogData = validateBlogData({ title, content, category });
 
-    if (payload.id !== userId) throw new Error('Unauthorized');
+    const categorySmallCase = blogData?.category.map((e: string) => e.toLowerCase());
+    const addedBlog = await addUserBlogService(userId, { ...blogData, category: categorySmallCase });
 
-    if (!blogData) throw new Error('Invalid blog data');
-
-    const addedBlog = await addUserBlogService(payload.id, blogData);
-    //check wrong status code
-    res.status(200).json({ message: "Add Blog successfully", addedBlog });
+    res.status(201).json({ message: "Add Blog successfully", addedBlog });
 }
 
 export const updateUserBlog = async (req: any, res: any) => {
+    const userId = req.headers['x-auth-userId'];
+    if (!userId) throw new Error('User ID not found in headers');
+
     const blogId = parseInt(req.params.id);
     const { title, content, category } = req.body;
-    const categorySmallCase = category.map((e: string) => e.toLowerCase());
 
-    const token = req.cookies.token;
-    const payload = await verifyToken(token);
+    const blogData = validateBlogData({ title, content, category });
 
-    const blogData = validateBlogData({ title, content, category: categorySmallCase });
+    const categorySmallCase = blogData?.category.map((e: string) => e.toLowerCase());
 
-    if (!token) throw new Error('No token found');
-    //check remove console logs
-    console.log('mazen')
+    const updateBlog = await updateUserBlogService(userId as number, { ...blogData, category: categorySmallCase, blogId });
 
-    const updateBlog = await updateUserBlogService(payload.id as number, { ...blogData, blogId});
-    //check wrong status code
     res.status(200).json({ message: "Update Blog successfully", updateBlog });
 }
 
 export const deleteUserBlog = async (req: any, res: any) => {
     const blogId = parseInt(req.params.id);
-    const token = req.cookies.token;
-    const payload = await verifyToken(token);
+    const userId = req.headers['x-auth-userId'];
+    if (!userId) throw new Error('User ID not found in headers');
 
-    if (!token) throw new Error('No token found');
+    await deleteUserBlogService(userId as number, blogId);
 
-    const deletedBlog = await deleteUserBlogService(payload.id as number, blogId);
-    //check we dont return deleted blog data
-    //check wrong status code
-    res.status(200).json({ message: "Delete Blog successfully", deletedBlog });
+    res.status(204).json({ message: "Delete Blog successfully" });
 }

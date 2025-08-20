@@ -39,8 +39,7 @@ export const getUserFromDatabase = async (email: string, password: string): Prom
 
     } catch (error) {
         console.log('Database no user email match: ', error);
-        throw new Error('Database operation login failed')
-        ;
+        throw new Error('Database operation login failed');
     } finally {
         client.release();
     }
@@ -50,25 +49,16 @@ export const getBlogsFromDatabase = async (categories?: string[]) => {
     const client = await pool.connect();
     try {
         let result;
-        //check one query for both
-        if (categories && categories.length > 0) {
-            const query = `
+        const query = `
                 SELECT DISTINCT b.*
                 FROM blogs b
                 INNER JOIN blog_categories bc ON b.id = bc.blog_id
                 INNER JOIN categories c ON bc.category_id = c.id
-                WHERE c.name = ANY($1);
+                ${categories && categories.length > 0 && 'WHERE c.name = ANY($1)'} ;
             `;
-            result = await client.query(query, [categories]);
+        categories && categories?.length > 0 ? result = await client.query(query, [categories]) : result = await client.query(query);
 
-            if (!result.rows) throw new Error('No blogs found for the specified categories');
-
-            return result.rows;
-        }
-
-        // If no categories are provided, fetch all blogs
-        const query = 'SELECT * FROM blogs';
-        result = await client.query(query);
+        if (result.rows.length === 0) throw new Error('No blogs found for the specified categories');
 
         return result.rows;
 
@@ -170,8 +160,6 @@ export const updateBlogInDatabase = async (userId: number, blogData: BlogDataBod
                 return categoryId;
             })
         );
-        //check remove 
-        console.log('mazenArray', categoryResults);
 
         // Remove rows for that blog_ id
         const removeBlogCategory = `DELETE FROM blog_categories WHERE blog_id = $1;`;
@@ -225,4 +213,18 @@ export const deleteBlogInDatabase = async (userId: number, blogId: number) => {
         client.release();
     }
 };
+
+export const checkUserOwnsBlog = async (userId: number, blogId: number): Promise<boolean> => {
+    const client = await pool.connect();
+    try {
+        const query = 'SELECT user_id FROM blogs WHERE id = $1 AND user_id = $2;';
+        const result = await client.query(query, [blogId, userId]);
+        return result.rowCount! > 0;
+    } catch (error) {
+        console.error('Database checkUserOwnsBlog failed:', error);
+        throw new Error('Checking blog ownership failed');
+    } finally {
+        client.release();
+    }
+}
 

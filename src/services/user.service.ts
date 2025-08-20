@@ -38,5 +38,4 @@ export const userLogInService = async (email: string, password: string): Promise
 
     return { ...userData, token }
 
-
 }

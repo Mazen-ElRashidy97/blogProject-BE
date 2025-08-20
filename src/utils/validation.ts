@@ -1,6 +1,6 @@
 import { BlogDataBody, UserLoginBody, UserSignUpBody } from "../models/models";
 import { z } from "zod";
-import { blogDataSchema, userLogInSchema, userSignUpSchema } from "../models/validationSchema";
+import { blogDataSchema, categoriesQuerySchema, userLogInSchema, userSignUpSchema } from "../models/validationSchema";
 
 
 export const validateUserSignUp = (data: UserSignUpBody): UserSignUpBody => {
@@ -35,6 +35,8 @@ export const validateBlogData = (data: BlogDataBody): BlogDataBody => {
         category
     });
     
-
     return { title, content, category };
+}
+export const validateCategoryQuery = (categories?: string): string[] => {
+    return categoriesQuerySchema.parse(categories);
 }
